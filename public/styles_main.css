@@ -29,3 +29,17 @@ button {
 button:hover {
     background-color: #cc0000;
 }
+
+#change-account {
+    background-color: #4d79ff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    margin-top: 20px;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+#change-account:hover {
+    background-color: #0040ff;
+}

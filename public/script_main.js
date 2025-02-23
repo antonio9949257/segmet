@@ -33,3 +33,20 @@ document.getElementById("logout").addEventListener("click", () => {
     // Redirigir al inicio de sesión
     window.location.href = "/";
 });
+
+// Cambiar cuenta manualmente
+document.getElementById("change-account").addEventListener("click", () => {
+    // Eliminar localStorage y sessionStorage
+    localStorage.clear();
+    sessionStorage.clear();
+
+    // Eliminar todas las cookies
+    document.cookie.split(";").forEach(cookie => {
+        document.cookie = cookie
+            .replace(/^ +/, "") // Eliminar espacios al inicio
+            .replace(/=.*/, "=;expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/"); // Expirar la cookie
+    });
+
+    // Redirigir al inicio de sesión
+    window.location.href = "/auth/google";
+});
