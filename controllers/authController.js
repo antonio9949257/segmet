@@ -72,11 +72,12 @@ export const oauthCallback = async (req, res) => {
         const { email, name } = await getUserData(accessToken);
         const user = await findOrCreateUser(email, name);
         const token = generateJwtToken(user);
-        
+
         // Store OAuth tokens in the database
         await storeOAuthTokens(user.id, accessToken, null, null); // Assuming no refresh token or expiry time for simplicity
 
-        res.json({ token, name });
+        res.redirect(`http://localhost:3000/main.html?token=${token}`);
+
     } catch (error) {
         console.error('Error during OAuth callback:', error);
         res.status(500).json({ message: error.message || 'Error during OAuth callback' });
