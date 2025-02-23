@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import { OAuth2Client } from 'google-auth-library'; 
 import db from '../config/db.js';
 import { getUserByEmail } from '../models/userModel.js';
 import dotenv from 'dotenv';
@@ -7,6 +8,9 @@ import axios from 'axios';
 dotenv.config();
 
 const { OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET, OAUTH_REDIRECT_URI, JWT_SECRET } = process.env;
+
+// Crea una instancia de OAuth2Client
+const oauth2Client = new OAuth2Client(OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET, OAUTH_REDIRECT_URI);
 
 const getAccessToken = async (code) => {
     try {
@@ -17,7 +21,11 @@ const getAccessToken = async (code) => {
             redirect_uri: OAUTH_REDIRECT_URI,
             grant_type: 'authorization_code'
         });
-        return data.access_token;
+
+        const { access_token, refresh_token, expires_in } = data;
+        const expiresAt = Date.now() + (expires_in * 1000); // Calculamos la fecha de expiración
+
+        return { accessToken: access_token, refreshToken: refresh_token, expiresAt };
     } catch (error) {
         throw new Error('Error fetching access token');
     }
@@ -68,7 +76,7 @@ export const oauthCallback = async (req, res) => {
     }
 
     try {
-        const accessToken = await getAccessToken(code);
+        const { accessToken } = await getAccessToken(code);
         const { email, name } = await getUserData(accessToken);
         const user = await findOrCreateUser(email, name);
         const token = generateJwtToken(user);
@@ -79,13 +87,17 @@ export const oauthCallback = async (req, res) => {
         res.redirect(`http://localhost:3000/main.html?token=${token}`);
 
     } catch (error) {
-        console.error('Error during OAuth callback:', error);
         res.status(500).json({ message: error.message || 'Error during OAuth callback' });
     }
 };
 
 // Función para redirigir a Google OAuth
 export const oauthGoogle = (req, res) => {
-    const redirectUri = `https://accounts.google.com/o/oauth2/auth?client_id=${OAUTH_CLIENT_ID}&redirect_uri=${OAUTH_REDIRECT_URI}&response_type=code&scope=email%20profile`;
-    res.redirect(redirectUri);
+    const authorizationUrl = oauth2Client.generateAuthUrl({
+        access_type: 'offline', 
+        scope: ['profile', 'email'],
+        prompt: 'select_account' 
+    });
+
+    res.redirect(authorizationUrl); 
 };
